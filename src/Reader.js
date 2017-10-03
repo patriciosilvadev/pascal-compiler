@@ -16,7 +16,7 @@ export const reader = input => {
     return ch;
   }
 
-  const peek = (spaces = 0) => input.charAt(pos + spaces);
+  const peek = () => input.charAt(pos);
 
   const eof = () => peek() !== 0 && peek() === '';
 

@@ -1,61 +1,98 @@
 export const tokenizer = input => {
   let current = null;
   const reserved = {
-    'and'       : 'AMD',
-    'array'     : 'ARRAY',
-    'begin'     : 'BEGIN',
-    'char'      : 'CHAR',
-    'chr'       : 'CHR',
-    'div'       : 'DIV',
-    'do'        : 'DO',
-    'else'      : 'ELSE',
-    'end'       : 'END',
-    'if'        : 'IF',
-    'integer'   : 'INTEGER',
-    'mod'       : 'MOD',
-    'not'       : 'NOT',
-    'of'        : 'OF',
-    'or'        : 'OR',
-    'ord'       : 'ORD',
-    'procedure' : 'PROCEDURE',
-    'program'   : 'PROGRAM',
-    'read'      : 'READ',
-    'readIn'    : 'READIN',
-    'then'      : 'THEN',
-    'var'       : 'VAR',
-    'while'     : 'WHILE',
-    'write'     : 'WRITE',
-    'writeIn'   : 'WRITEIN',
-    'function'  : 'FUNCTION', //Add by me
+    'and'             : 'andsym',
+    'array'           : 'arraysym',
+    'asm'             : 'asmsym',
+    'begin'           : 'beginsym',
+    'break'           : 'breaksym',
+    'case'            : 'casesym',
+    'const'           : 'constsym',
+    'constructor'     : 'constructorsym',
+    'continue'        : 'continuesym',
+    'char'            : 'charsym',
+    'chr'             : 'chrsym',
+    'destructor'      : 'destructorsym',
+    'div'             : 'divsym',
+    'do'              : 'dosym',
+    'downto'          : 'downtosym',
+    'else'            : 'elsesym',
+    'end'             : 'endsym',
+    'false'           : 'falsesym',
+    'file'            : 'filesym',
+    'for'             : 'forsym',
+    'function'        : 'functionsym',
+    'goto'            : 'gotosym',
+    'if'              : 'ifsym',
+    'implementation'  : 'implementationsym',
+    'in'              : 'insym',
+    'inline'          : 'inlinesym',
+    'interface'       : 'interfacesym',
+    'integer'         : 'integersym',
+    'label'           : 'labelsym',
+    'mod'             : 'modsym',
+    'nil'             : 'nilsym',
+    'not'             : 'notsym',
+    'object'          : 'objectsym',
+    'of'              : 'ofsym',
+    'on'              : 'onsym',
+    'operator'        : 'operatorsym',
+    'or'              : 'orsym',
+    'ord'             : 'ordsym',
+    'packed'          : 'packedsym',
+    'procedure'       : 'proceduresym',
+    'program'         : 'programsym',
+    'record'          : 'recordsym',
+    'repeat'          : 'repeatsym',
+    'read'            : 'readsym',
+    'readIn'          : 'readinsym',
+    'set'             : 'setsym',
+    'shl'             : 'shlsym',
+    'shr'             : 'shrsym',
+    'string'          : 'stryingsym',
+    'then'            : 'thensym',
+    'to'              : 'tosym',
+    'true'            : 'truesym',
+    'type'            : 'typesym',
+    'unit'            : 'unitsym',
+    'until'           : 'untilsym',
+    'uses'            : 'usessym',
+    'var'             : 'varsym',
+    'while'           : 'whilesym',
+    'write'           : 'writesym',
+    'with'            : 'withsym',
+    'writeIn'         : 'writeinsym',
+    'xor'             : 'xorsym',
   };
 
   const operators = {
-    '+' : 'PLUS',
-    '-' : 'MINUS',
-    '*' : 'TIMES',
-    '<' : 'LESS',
-    '>' : 'GREATER',
-    '=' : 'EQUAL',
-    ':' : 'COLON',
-    ';' : 'SEMICOLON',
-    ',' : 'COMMA',
-    '(' : 'LPAREN',
-    ')' : 'RPAREN',
-    '.' : 'PERIOD',
-    ':=' : 'ASSIGN',
-    '>=' : 'GREATEREQUAL',
-    '<=' : 'LESSEQUAL',
-    '<>' : 'NOTEQUAL',
-    '(.' : 'LBRACK',
-    '.)' : 'RBRACK',
+    '+'  : 'plus',
+    '-'  : 'minus',
+    '*'  : 'times',
+    '<'  : 'less',
+    '>'  : 'greater',
+    '='  : 'equal',
+    ':'  : 'colon',
+    ';'  : 'semocolon',
+    ','  : 'comma',
+    '('  : 'lparen',
+    ')'  : 'rparen',
+    '.'  : 'period',
+    ':=' : 'assign',
+    '>=' : 'greaterequal',
+    '<=' : 'lessequal',
+    '<>' : 'notequal',
+    '[' : 'lbrack',
+    ']' : 'rbrack',
   };
 
-  const is_reserved = word => reserved[word]
+  const is_reserved = word => reserved[word.toLowerCase()]
   const is_operator = word => operators[word];
   const is_digit = ch => !isNaN(ch);
   const is_id_start = ch => /[a-z]/i.test(ch);
   const is_id = ch => /[a-z0-9]/i.test(ch)
   const is_whitespace = ch => " \t\n".indexOf(ch) >= 0;
+  const is_bad = ch => "!@#$%^&-|?".indexOf(ch) >= 0;
 
   const read_while = predicate => {
     let str = '';
@@ -68,13 +105,13 @@ export const tokenizer = input => {
   }
 
   const read_number = () => {
-      let has_dot   = false;
+      let has_dot   = 0;
       const number  = read_while(ch => {
         if (ch === ".") {
-          if (has_dot) {
+          if (has_dot > 1) {
             return false;
           } else {
-            has_dot = true;
+            has_dot++;
 
             return true;
           }
@@ -83,17 +120,32 @@ export const tokenizer = input => {
         return is_digit(ch);
       });
 
+      if (number.indexOf('..') !== -1) {
+        return {
+          type: "range",
+          value: number
+        };
+      }
+
+      if (!is_whitespace(number[number.length - 1]) && !is_operator(input.peek()) && input.peek() !== ' ' && input.peek() !== ';') {
+        return illegal(number + read_while(ch => !is_whitespace(ch) && ch === ';'));
+      }
+
       return {
-        type: "NUMBER",
-        value: parseFloat(number)
+        type: "number",
+        value: number
       };
   }
 
   const read_ident = () => {
     const id = read_while(is_id);
 
+    if (input.peek() !== ' ' && is_bad(input.peek())) {
+      return illegal(id + read_while(ch => !is_whitespace(ch)));
+    }
+
     return {
-      type  : is_reserved(id) ? reserved[id] : "ID", //indentifier to ID
+      type  : is_reserved(id) ? reserved[id.toLowerCase()] : "indentifier",
       value : id
     };
 }
@@ -122,10 +174,10 @@ export const tokenizer = input => {
       return str;
   }
 
-  const read_string = () => {
-      const string = read_escaped('"');
+  const read_string = (quoteType) => {
+      const string = read_escaped(quoteType);
       return {
-        type: string.length > 1 ? 'QOUTESTRING' : 'LITCHAR',
+        type: string.length > 1 ? 'quotestring' : 'litchar',
         value: string
       };
   }
@@ -138,20 +190,23 @@ export const tokenizer = input => {
    *  Multi line (* *)
    *  Multi Line { }
    */
-  const skip_comment = (end) => {
+  const skip_comment = end => {
     if (end && end.length > 1) {
       read_while(ch => {
         if (ch !== end[0]) {
           return true;
         } else {
           input.next();
-
           if (input.peek() === end[1]) {
-            input.next();
             return false;
-          } else {
-            return true;
           }
+
+          input.next();
+          if (input.peek() === end[1]) {
+            return false;
+          }
+
+          return true;
         }
       });
     } else {
@@ -161,13 +216,20 @@ export const tokenizer = input => {
     input.next();
   }
 
+  const illegal = ch => {
+    return {
+      type: 'illegal',
+      value: ch
+    };
+  }
+
   //Change this
   const read_next = () => {
       read_while(is_whitespace);
 
       if (input.eof()) {
         return {
-          type: 'EOFSYM',
+          type: 'eofsym',
           value: null
         };
       }
@@ -186,10 +248,7 @@ export const tokenizer = input => {
 
         input.croak(`Can't handle character: ${ch}`);
 
-        return {
-          type: 'ILLEGAL',
-          value: ch
-        };
+        return illegal(ch);
       }
 
       // Multi Line Comment
@@ -198,8 +257,14 @@ export const tokenizer = input => {
           return read_next();
       }
 
+      // String
+      if (ch === '\'') {
+        return read_string('\'');
+      }
+
+      // Other String
       if (ch === '"') {
-        return read_string();
+        return read_string('"');
       }
 
       if (is_digit(ch)) {
@@ -229,10 +294,7 @@ export const tokenizer = input => {
 
       input.croak(`Can't handle character: ${ch}`);
 
-      return {
-        type: 'ILLEGAL',
-        value: input.next()
-      };
+      return illegal(input.next());
   }
 
   const peek = () => current || (current = read_next());

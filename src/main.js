@@ -1,5 +1,4 @@
 import fs from 'fs';
-import util from 'util';
 
 import { reader } from './Reader';
 import { tokenizer } from './Tokenizer';
@@ -20,7 +19,7 @@ if (args.length < 1) {
 }
 
 // Function to add make each column 20 spaces width with string inside it;
-const fixString = str => `${str}${' '.repeat(20 - str.length)}`;
+const fixString = str => `${str}${' '.repeat(50 - str.length)}`;
 
 // Read File
 const file = fs.readFileSync(filePath, 'utf8');
@@ -31,8 +30,10 @@ const tokens = tokenizer(reader(file));
 // Overwrite old out file with new header
 fs.writeFileSync(outPath, `${fixString('LEXEME')}${fixString('SPELLING')}\n`);
 let token = tokens.next();
-while(token.type != 'EOFSYM') {
+while(token.type != 'eofsym') {
   // Apped new line to out file
+  // console.log(token);
   fs.appendFileSync(outPath, `${fixString(token.type)}${fixString(token.value)}\n`);
   token = tokens.next()
 }
+fs.appendFileSync(outPath, `${fixString(token.type)}${fixString('null')}\n`);

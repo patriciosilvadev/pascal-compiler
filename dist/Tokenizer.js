@@ -6,57 +6,93 @@ Object.defineProperty(exports, "__esModule", {
 var tokenizer = exports.tokenizer = function tokenizer(input) {
   var current = null;
   var reserved = {
-    'and': 'AMD',
-    'array': 'ARRAY',
-    'begin': 'BEGIN',
-    'char': 'CHAR',
-    'chr': 'CHR',
-    'div': 'DIV',
-    'do': 'DO',
-    'else': 'ELSE',
-    'end': 'END',
-    'if': 'IF',
-    'integer': 'INTEGER',
-    'mod': 'MOD',
-    'not': 'NOT',
-    'of': 'OF',
-    'or': 'OR',
-    'ord': 'ORD',
-    'procedure': 'PROCEDURE',
-    'program': 'PROGRAM',
-    'read': 'READ',
-    'readIn': 'READIN',
-    'then': 'THEN',
-    'var': 'VAR',
-    'while': 'WHILE',
-    'write': 'WRITE',
-    'writeIn': 'WRITEIN',
-    'function': 'FUNCTION' //Add by me
+    'and': 'andsym',
+    'array': 'arraysym',
+    'asm': 'asmsym',
+    'begin': 'beginsym',
+    'break': 'breaksym',
+    'case': 'casesym',
+    'const': 'constsym',
+    'constructor': 'constructorsym',
+    'continue': 'continuesym',
+    'char': 'charsym',
+    'chr': 'chrsym',
+    'destructor': 'destructorsym',
+    'div': 'divsym',
+    'do': 'dosym',
+    'downto': 'downtosym',
+    'else': 'elsesym',
+    'end': 'endsym',
+    'false': 'falsesym',
+    'file': 'filesym',
+    'for': 'forsym',
+    'function': 'functionsym',
+    'goto': 'gotosym',
+    'if': 'ifsym',
+    'implementation': 'implementationsym',
+    'in': 'insym',
+    'inline': 'inlinesym',
+    'interface': 'interfacesym',
+    'integer': 'integersym',
+    'label': 'labelsym',
+    'mod': 'modsym',
+    'nil': 'nilsym',
+    'not': 'notsym',
+    'object': 'objectsym',
+    'of': 'ofsym',
+    'on': 'onsym',
+    'operator': 'operatorsym',
+    'or': 'orsym',
+    'ord': 'ordsym',
+    'packed': 'packedsym',
+    'procedure': 'proceduresym',
+    'program': 'programsym',
+    'record': 'recordsym',
+    'repeat': 'repeatsym',
+    'read': 'readsym',
+    'readIn': 'readinsym',
+    'set': 'setsym',
+    'shl': 'shlsym',
+    'shr': 'shrsym',
+    'string': 'stryingsym',
+    'then': 'thensym',
+    'to': 'tosym',
+    'true': 'truesym',
+    'type': 'typesym',
+    'unit': 'unitsym',
+    'until': 'untilsym',
+    'uses': 'usessym',
+    'var': 'varsym',
+    'while': 'whilesym',
+    'write': 'writesym',
+    'with': 'withsym',
+    'writeIn': 'writeinsym',
+    'xor': 'xorsym'
   };
 
   var operators = {
-    '+': 'PLUS',
-    '-': 'MINUS',
-    '*': 'TIMES',
-    '<': 'LESS',
-    '>': 'GREATER',
-    '=': 'EQUAL',
-    ':': 'COLON',
-    ';': 'SEMICOLON',
-    ',': 'COMMA',
-    '(': 'LPAREN',
-    ')': 'RPAREN',
-    '.': 'PERIOD',
-    ':=': 'ASSIGN',
-    '>=': 'GREATEREQUAL',
-    '<=': 'LESSEQUAL',
-    '<>': 'NOTEQUAL',
-    '(.': 'LBRACK',
-    '.)': 'RBRACK'
+    '+': 'plus',
+    '-': 'minus',
+    '*': 'times',
+    '<': 'less',
+    '>': 'greater',
+    '=': 'equal',
+    ':': 'colon',
+    ';': 'semocolon',
+    ',': 'comma',
+    '(': 'lparen',
+    ')': 'rparen',
+    '.': 'period',
+    ':=': 'assign',
+    '>=': 'greaterequal',
+    '<=': 'lessequal',
+    '<>': 'notequal',
+    '[': 'lbrack',
+    ']': 'rbrack'
   };
 
   var is_reserved = function is_reserved(word) {
-    return reserved[word];
+    return reserved[word.toLowerCase()];
   };
   var is_operator = function is_operator(word) {
     return operators[word];
@@ -75,6 +111,9 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
   var is_whitespace = function is_whitespace(ch) {
     return " \t\n".indexOf(ch) >= 0;
   };
+  var is_bad = function is_bad(ch) {
+    return "!@#$%^&-|?".indexOf(ch) >= 0;
+  };
 
   var read_while = function read_while(predicate) {
     var str = '';
@@ -87,13 +126,13 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
   };
 
   var read_number = function read_number() {
-    var has_dot = false;
+    var has_dot = 0;
     var number = read_while(function (ch) {
       if (ch === ".") {
-        if (has_dot) {
+        if (has_dot > 1) {
           return false;
         } else {
-          has_dot = true;
+          has_dot++;
 
           return true;
         }
@@ -102,17 +141,36 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
       return is_digit(ch);
     });
 
+    if (number.indexOf('..') !== -1) {
+      return {
+        type: "range",
+        value: number
+      };
+    }
+
+    if (!is_whitespace(number[number.length - 1]) && !is_operator(input.peek()) && input.peek() !== ' ' && input.peek() !== ';') {
+      return illegal(number + read_while(function (ch) {
+        return !is_whitespace(ch) && ch === ';';
+      }));
+    }
+
     return {
-      type: "NUMBER",
-      value: parseFloat(number)
+      type: "number",
+      value: number
     };
   };
 
   var read_ident = function read_ident() {
     var id = read_while(is_id);
 
+    if (input.peek() !== ' ' && is_bad(input.peek())) {
+      return illegal(id + read_while(function (ch) {
+        return !is_whitespace(ch);
+      }));
+    }
+
     return {
-      type: is_reserved(id) ? reserved[id] : "ID", //indentifier to ID
+      type: is_reserved(id) ? reserved[id.toLowerCase()] : "indentifier",
       value: id
     };
   };
@@ -141,10 +199,10 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
     return str;
   };
 
-  var read_string = function read_string() {
-    var string = read_escaped('"');
+  var read_string = function read_string(quoteType) {
+    var string = read_escaped(quoteType);
     return {
-      type: string.length > 1 ? 'QOUTESTRING' : 'LITCHAR',
+      type: string.length > 1 ? 'quotestring' : 'litchar',
       value: string
     };
   };
@@ -164,13 +222,16 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
           return true;
         } else {
           input.next();
-
           if (input.peek() === end[1]) {
-            input.next();
             return false;
-          } else {
-            return true;
           }
+
+          input.next();
+          if (input.peek() === end[1]) {
+            return false;
+          }
+
+          return true;
         }
       });
     } else {
@@ -182,13 +243,20 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
     input.next();
   };
 
+  var illegal = function illegal(ch) {
+    return {
+      type: 'illegal',
+      value: ch
+    };
+  };
+
   //Change this
   var read_next = function read_next() {
     read_while(is_whitespace);
 
     if (input.eof()) {
       return {
-        type: 'EOFSYM',
+        type: 'eofsym',
         value: null
       };
     }
@@ -207,10 +275,7 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
 
       input.croak('Can\'t handle character: ' + ch);
 
-      return {
-        type: 'ILLEGAL',
-        value: ch
-      };
+      return illegal(ch);
     }
 
     // Multi Line Comment
@@ -219,8 +284,14 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
       return read_next();
     }
 
+    // String
+    if (ch === '\'') {
+      return read_string('\'');
+    }
+
+    // Other String
     if (ch === '"') {
-      return read_string();
+      return read_string('"');
     }
 
     if (is_digit(ch)) {
@@ -251,10 +322,7 @@ var tokenizer = exports.tokenizer = function tokenizer(input) {
 
     input.croak('Can\'t handle character: ' + ch);
 
-    return {
-      type: 'ILLEGAL',
-      value: input.next()
-    };
+    return illegal(input.next());
   };
 
   var peek = function peek() {

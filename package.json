@@ -4,7 +4,9 @@
   "scripts": {
     "build": "babel src -d dist",
     "start": "node ./dist/main.js",
-    "test": "npm run build && node ./dist/main.js ./test.pas"
+    "test" : "npm run build && node ./dist/main.js ./test.pas",
+    "package": "babel src --out-file index.js",
+    "ugly" : "npm run package && uglifyjs index.js -o ./index.min.js -c -m"
   },
   "devDependencies": {
     "babel-cli": "^6.0.0",

@@ -4,10 +4,6 @@ var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
 
-var _util = require('util');
-
-var _util2 = _interopRequireDefault(_util);
-
 var _Reader = require('./Reader');
 
 var _Tokenizer = require('./Tokenizer');
@@ -31,7 +27,7 @@ if (args.length < 1) {
 
 // Function to add make each column 20 spaces width with string inside it;
 var fixString = function fixString(str) {
-  return '' + str + ' '.repeat(20 - str.length);
+  return '' + str + ' '.repeat(50 - str.length);
 };
 
 // Read File
@@ -43,8 +39,10 @@ var tokens = (0, _Tokenizer.tokenizer)((0, _Reader.reader)(file));
 // Overwrite old out file with new header
 _fs2.default.writeFileSync(outPath, '' + fixString('LEXEME') + fixString('SPELLING') + '\n');
 var token = tokens.next();
-while (token.type != 'EOFSYM') {
+while (token.type != 'eofsym') {
   // Apped new line to out file
+  // console.log(token);
   _fs2.default.appendFileSync(outPath, '' + fixString(token.type) + fixString(token.value) + '\n');
   token = tokens.next();
 }
+_fs2.default.appendFileSync(outPath, '' + fixString(token.type) + fixString('null') + '\n');

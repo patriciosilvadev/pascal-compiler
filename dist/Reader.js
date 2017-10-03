@@ -22,8 +22,7 @@ var reader = exports.reader = function reader(input) {
   };
 
   var peek = function peek() {
-    var spaces = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-    return input.charAt(pos + spaces);
+    return input.charAt(pos);
   };
 
   var eof = function eof() {
